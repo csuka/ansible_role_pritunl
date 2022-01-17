@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: Kevin Csuka
-  description: A role to install, configure pritunl
+  description: A role to install and configure pritunl
   namespace: kcsuka
   role_name: pritunl
   license: Apache License, Version 2.0
@@ -15,6 +15,7 @@ galaxy_info:
     - pritunl
     - vpn
     - openvpn
+    - mongodb
+    -
 
 dependencies: []
-
