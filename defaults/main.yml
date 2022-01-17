@@ -1,0 +1,14 @@
+---
+pritunl_epel: true  # to set the epel repo, for the openvpn package
+pritunl_repo: true  # to set the pritunl repo
+
+pritunl_state: installed
+pritunl_limits: true
+
+pritunl_dbpath: /var/lib/pritunl
+
+# https://docs.pritunl.com/docs/load-balancing
+pritunl_server_port: "app.server_port = 443"
+pritunl_redirect_server: "app.redirect_server = false"
+pritunl_reverse_proxy: "app.reverse_proxy = true"
+pritunl_server_ssl: "app.server_ssl = false"

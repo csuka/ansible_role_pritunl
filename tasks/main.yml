@@ -1,0 +1,83 @@
+---
+- name: ensure dbpath directory
+  file:
+    state: directory
+    path: "{{ pritunl_dbpath }}"
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: epel repo when set
+  dnf:
+    name: epel-release
+  when: pritunl_epel
+
+- name: stat pritunl key
+  stat:
+    path: "{{ pritunl_dbpath }}/key"
+  register: key_file
+
+- name: import key when required
+  shell: >-
+    gpg --keyserver hkp://keyserver.ubuntu.com
+    --recv-keys 7568D9BB55FF9E5287D586017AE645C0CF8E292A &&
+    gpg --armor --export 7568D9BB55FF9E5287D586017AE645C0CF8E292A >
+    {{ pritunl_dbpath }}/key &&
+    sudo rpm --import {{ pritunl_dbpath }}/key
+  when: not key_file.stat.exists
+
+- name: set pritunl repo when set
+  yum_repository:
+    name: pritunl
+    description: 'Pritunl Repository'
+    file: pritunl
+    baseurl: https://repo.pritunl.com/stable/yum/centos/8/
+    enabled: yes
+    gpgcheck: yes
+  when: pritunl_repo
+
+- name: ensure pritunl has state {{ pritunl_state }}
+  dnf:
+    name: pritunl
+    state: "{{ pritunl_state }}"
+
+- name: place limits.conf file when set
+  template:
+    src: limits.conf.j2
+    dest: /etc/security/limits.conf
+    mode: '0644'
+  when: pritunl_limits
+
+- name: remove the executable bit from pritunl service
+  file:
+    path: /etc/systemd/system/pritunl.service
+    owner: root
+    group: root
+    mode: '0774'
+
+- name: ensure pritunl is started and enabled
+  service:
+    name: pritunl
+    state: started
+    enabled: yes
+
+- name: retrieve pritunl app values
+  shell: pritunl get app
+  changed_when: false
+  register: pritunl_get_app
+
+- name: set server_port when set
+  shell: "pritunl {{ pritunl_server_port }}"
+  when: pritunl_server_port not in pritunl_get_app.stdout
+
+- name: set redirect_server when set
+  shell: "pritunl {{ pritunl_redirect_server }}"
+  when: pritunl_redirect_server not in pritunl_get_app.stdout
+
+- name: set reverse_proxy when set
+  shell: "pritunl {{ pritunl_reverse_proxy }}"
+  when: pritunl_reverse_proxy not in pritunl_get_app.stdout
+
+- name: set server_ssl when set
+  shell: "pritunl {{ pritunl_server_ssl }}"
+  when: pritunl_server_ssl not in pritunl_get_app.stdout
